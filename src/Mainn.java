@@ -160,8 +160,8 @@ public class Mainn {
         private static Config fromArgs(String[] args) {
             LocalDate startDate = LocalDate.now().minusDays(DEFAULT_LOOKBACK_DAYS - 1L);
             LocalDate endDate = LocalDate.now();
-            int min = 4;
-            int max = 11;
+            int min = 50000;
+            int max = 50000;
             String file = "src/main/java/activity.txt";
             boolean push = false;
             String branch = "main";
