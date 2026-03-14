@@ -1,7 +1,6 @@
 package uz.ruzimov;
 
 import java.io.IOException;
-import java.io.ObjectInputFilter.Config;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,19 +9,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import java.util.Random;
 
 public class Mainn {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern(
-            "yyyy-MM-dd'T'HH:mm:ss");
-    private static final int DEFAULT_LOOKBACK_DAYS = 300;
+    private static final DateTimeFormatter DATE_TIME_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
+    // faqat 1 kun uchun
+    private static final int DEFAULT_LOOKBACK_DAYS = 1;
 
     public static void main(String[] args) throws Exception {
         Config config = Config.fromArgs(args);
@@ -42,19 +40,13 @@ public class Mainn {
         Random random = new Random();
         int totalCommits = 0;
 
-        System.out.printf("Starting commit generation from %s to %s%n", config.startDate,
-                config.endDate);
-        if (args.length == 0) {
-            System.out.printf("No date args provided, using default last %d days (inclusive).%n",
-                    DEFAULT_LOOKBACK_DAYS);
-        }
+        System.out.printf("Starting commit generation from %s to %s%n", config.startDate, config.endDate);
         System.out.printf("Activity file: %s%n", activityPath);
         if (config.dryRun) {
             System.out.println("Dry run mode is ON (no git commands will be executed).");
         }
 
-        for (LocalDate date = config.startDate; !date.isAfter(config.endDate);
-             date = date.plusDays(1)) {
+        for (LocalDate date = config.startDate; !date.isAfter(config.endDate); date = date.plusDays(1)) {
             int commitsForDay = config.minCommitsPerDay
                     + random.nextInt(config.maxCommitsPerDay - config.minCommitsPerDay + 1);
 
@@ -67,8 +59,7 @@ public class Mainn {
 
                 LocalDateTime dateTime = LocalDateTime.of(date, randomTime);
                 String dateTimeText = dateTime.format(DATE_TIME_FORMAT);
-                String line =
-                        "Commit made on " + date.format(DATE_FORMAT) + " - #" + i + " (" + dateTimeText + ")\n";
+                String line = "Commit made on " + date.format(DATE_FORMAT) + " - #" + i + " (" + dateTimeText + ")\n";
 
                 if (config.dryRun) {
                     System.out.printf("[DRY-RUN] %s", line);
@@ -116,17 +107,14 @@ public class Mainn {
         String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         int exitCode = process.waitFor();
 
-
         if (exitCode != 0) {
             throw new IllegalStateException(
                     "Command failed (" + String.join(" ", command) + ")\n" + output
             );
         }
-
     }
 
     private static class Config {
-
         private final LocalDate startDate;
         private final LocalDate endDate;
         private final int minCommitsPerDay;
@@ -156,12 +144,11 @@ public class Mainn {
             this.dryRun = dryRun;
         }
 
-
         private static Config fromArgs(String[] args) {
             LocalDate startDate = LocalDate.now().minusDays(DEFAULT_LOOKBACK_DAYS - 1L);
             LocalDate endDate = LocalDate.now();
-            int min = 50000;
-            int max = 50000;
+            int min = 1000;   // default 1000 commit
+            int max = 1000;   // default 1000 commit
             String file = "src/main/java/activity.txt";
             boolean push = false;
             String branch = "main";
@@ -176,6 +163,9 @@ public class Mainn {
                     min = Integer.parseInt(arg.substring("--min=".length()));
                 } else if (arg.startsWith("--max=")) {
                     max = Integer.parseInt(arg.substring("--max=".length()));
+                } else if (arg.startsWith("--commits=")) {
+                    // qo‘shimcha flag: --commits=1000
+                    min = max = Integer.parseInt(arg.substring("--commits=".length()));
                 } else if (arg.startsWith("--file=")) {
                     file = arg.substring("--file=".length());
                 } else if (arg.equals("--push")) {
