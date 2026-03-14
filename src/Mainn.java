@@ -1,185 +1,165 @@
-package uz.ruzimov;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.io.*;
 
 public class Mainn {
 
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final DateTimeFormatter DATE_TIME_FORMAT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    // Matematik funksiyalar
+    public static long factorial(int n) {
+        if (n <= 1) return 1;
+        return n * factorial(n - 1);
+    }
 
-    // faqat 1 kun uchun
-    private static final int DEFAULT_LOOKBACK_DAYS = 1;
+    public static int fibonacci(int n) {
+        if (n <= 1) return n;
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
 
-    public static void main(String[] args) throws Exception {
-        Config config = Config.fromArgs(args);
-
-        if (config.endDate.isBefore(config.startDate)) {
-            throw new IllegalArgumentException("End date cannot be before start date.");
+    public static boolean isPrime(int n) {
+        if (n <= 1) return false;
+        for (int i = 2; i <= Math.sqrt(n); i++) {
+            if (n % i == 0) return false;
         }
+        return true;
+    }
 
-        if (config.maxCommitsPerDay < config.minCommitsPerDay) {
-            throw new IllegalArgumentException("max commits per day must be >= min commits per day.");
+    // String funksiyalar
+    public static boolean isPalindrome(String s) {
+        String rev = new StringBuilder(s).reverse().toString();
+        return s.equalsIgnoreCase(rev);
+    }
+
+    public static String reverseString(String s) {
+        return new StringBuilder(s).reverse().toString();
+    }
+
+    public static int countVowels(String s) {
+        int count = 0;
+        for (char c : s.toLowerCase().toCharArray()) {
+            if ("aeiou".indexOf(c) != -1) count++;
         }
+        return count;
+    }
 
-        Path activityPath = Path.of(config.activityFilePath);
-        if (activityPath.getParent() != null) {
-            Files.createDirectories(activityPath.getParent());
-        }
-        Random random = new Random();
-        int totalCommits = 0;
+    // Array funksiyalar
+    public static int findMax(int[] arr) {
+        int max = arr[0];
+        for (int n : arr) if (n > max) max = n;
+        return max;
+    }
 
-        System.out.printf("Starting commit generation from %s to %s%n", config.startDate, config.endDate);
-        System.out.printf("Activity file: %s%n", activityPath);
-        if (config.dryRun) {
-            System.out.println("Dry run mode is ON (no git commands will be executed).");
-        }
+    public static int findMin(int[] arr) {
+        int min = arr[0];
+        for (int n : arr) if (n < min) min = n;
+        return min;
+    }
 
-        for (LocalDate date = config.startDate; !date.isAfter(config.endDate); date = date.plusDays(1)) {
-            int commitsForDay = config.minCommitsPerDay
-                    + random.nextInt(config.maxCommitsPerDay - config.minCommitsPerDay + 1);
-
-            for (int i = 1; i <= commitsForDay; i++) {
-                LocalTime randomTime = LocalTime.of(
-                        9 + random.nextInt(10),
-                        random.nextInt(60),
-                        random.nextInt(60)
-                );
-
-                LocalDateTime dateTime = LocalDateTime.of(date, randomTime);
-                String dateTimeText = dateTime.format(DATE_TIME_FORMAT);
-                String line = "Commit made on " + date.format(DATE_FORMAT) + " - #" + i + " (" + dateTimeText + ")\n";
-
-                if (config.dryRun) {
-                    System.out.printf("[DRY-RUN] %s", line);
-                    continue;
+    public static void bubbleSort(int[] arr) {
+        int n = arr.length;
+        for (int i = 0; i < n-1; i++) {
+            for (int j = 0; j < n-i-1; j++) {
+                if (arr[j] > arr[j+1]) {
+                    int temp = arr[j];
+                    arr[j] = arr[j+1];
+                    arr[j+1] = temp;
                 }
-
-                Files.writeString(
-                        activityPath,
-                        line,
-                        StandardCharsets.UTF_8,
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.APPEND
-                );
-
-                runGit(List.of("git", "add", config.activityFilePath), Map.of());
-                runGit(
-                        List.of("git", "commit", "-m", "Commit " + i + " on " + date.format(DATE_FORMAT)),
-                        Map.of(
-                                "GIT_AUTHOR_DATE", dateTimeText,
-                                "GIT_COMMITTER_DATE", dateTimeText
-                        )
-                );
-
-                totalCommits++;
             }
-
-            System.out.printf("Processed %s -> %d commits%n", date, commitsForDay);
-        }
-
-        System.out.printf("Done. Created %d commits.%n", totalCommits);
-
-        if (!config.dryRun && config.pushAfterCommit) {
-            runGit(List.of("git", "push", "-u", "origin", config.branchName), Map.of());
-            System.out.printf("Pushed to origin/%s%n", config.branchName);
         }
     }
 
-    private static void runGit(List<String> command, Map<String, String> extraEnv)
-            throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.redirectErrorStream(true);
-        processBuilder.environment().putAll(extraEnv);
+    // OOP misol
+    static abstract class Animal {
+        abstract void sound();
+    }
 
-        Process process = processBuilder.start();
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        int exitCode = process.waitFor();
+    static class Dog extends Animal {
+        void sound() { System.out.println("Woof!"); }
+    }
 
-        if (exitCode != 0) {
-            throw new IllegalStateException(
-                    "Command failed (" + String.join(" ", command) + ")\n" + output
-            );
+    static class Cat extends Animal {
+        void sound() { System.out.println("Meow!"); }
+    }
+
+    interface Shape {
+        double area();
+    }
+
+    static class Circle implements Shape {
+        double r;
+        Circle(double r) { this.r = r; }
+        public double area() { return Math.PI * r * r; }
+    }
+
+    static class Rectangle implements Shape {
+        double w, h;
+        Rectangle(double w, double h) { this.w = w; this.h = h; }
+        public double area() { return w * h; }
+    }
+
+    // Oddiy o‘yin
+    public static void guessNumberGame() {
+        Scanner sc = new Scanner(System.in);
+        Random rand = new Random();
+        int number = rand.nextInt(100) + 1;
+        int guess = 0;
+        System.out.println("1 dan 100 gacha son toping!");
+        while (guess != number) {
+            guess = sc.nextInt();
+            if (guess < number) System.out.println("Kattaroq son!");
+            else if (guess > number) System.out.println("Kichikroq son!");
+            else System.out.println("To‘g‘ri topdingiz!");
         }
     }
 
-    private static class Config {
-        private final LocalDate startDate;
-        private final LocalDate endDate;
-        private final int minCommitsPerDay;
-        private final int maxCommitsPerDay;
-        private final String activityFilePath;
-        private final boolean pushAfterCommit;
-        private final String branchName;
-        private final boolean dryRun;
-
-        private Config(
-                LocalDate startDate,
-                LocalDate endDate,
-                int minCommitsPerDay,
-                int maxCommitsPerDay,
-                String activityFilePath,
-                boolean pushAfterCommit,
-                String branchName,
-                boolean dryRun
-        ) {
-            this.startDate = startDate;
-            this.endDate = endDate;
-            this.minCommitsPerDay = minCommitsPerDay;
-            this.maxCommitsPerDay = maxCommitsPerDay;
-            this.activityFilePath = activityFilePath;
-            this.pushAfterCommit = pushAfterCommit;
-            this.branchName = branchName;
-            this.dryRun = dryRun;
+    // File I/O
+    public static void writeFile(String filename, String content) {
+        try (FileWriter fw = new FileWriter(filename)) {
+            fw.write(content);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
 
-        private static Config fromArgs(String[] args) {
-            LocalDate startDate = LocalDate.now().minusDays(DEFAULT_LOOKBACK_DAYS - 1L);
-            LocalDate endDate = LocalDate.now();
-            int min = 1000;   // default 1000 commit
-            int max = 1000;   // default 1000 commit
-            String file = "src/main/java/activity.txt";
-            boolean push = false;
-            String branch = "main";
-            boolean dryRun = false;
-
-            for (String arg : args) {
-                if (arg.startsWith("--start=")) {
-                    startDate = LocalDate.parse(arg.substring("--start=".length()), DATE_FORMAT);
-                } else if (arg.startsWith("--end=")) {
-                    endDate = LocalDate.parse(arg.substring("--end=".length()), DATE_FORMAT);
-                } else if (arg.startsWith("--min=")) {
-                    min = Integer.parseInt(arg.substring("--min=".length()));
-                } else if (arg.startsWith("--max=")) {
-                    max = Integer.parseInt(arg.substring("--max=".length()));
-                } else if (arg.startsWith("--commits=")) {
-                    // qo‘shimcha flag: --commits=1000
-                    min = max = Integer.parseInt(arg.substring("--commits=".length()));
-                } else if (arg.startsWith("--file=")) {
-                    file = arg.substring("--file=".length());
-                } else if (arg.equals("--push")) {
-                    push = true;
-                } else if (arg.startsWith("--branch=")) {
-                    branch = arg.substring("--branch=".length());
-                } else if (arg.equals("--dry-run")) {
-                    dryRun = true;
-                } else {
-                    throw new IllegalArgumentException("Unknown argument: " + arg);
-                }
+    public static String readFile(String filename) {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
             }
-
-            return new Config(startDate, endDate, min, max, file, push, branch, dryRun);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        System.out.println("Factorial(5) = " + factorial(5));
+        System.out.println("Fibonacci(10) = " + fibonacci(10));
+        System.out.println("Is 17 prime? " + isPrime(17));
+
+        System.out.println("Palindrome check: " + isPalindrome("level"));
+        System.out.println("Reverse string: " + reverseString("Java"));
+        System.out.println("Vowels in 'Programming': " + countVowels("Programming"));
+
+        int[] arr = {5, 2, 9, 1, 7};
+        bubbleSort(arr);
+        System.out.println("Sorted array: " + Arrays.toString(arr));
+        System.out.println("Max: " + findMax(arr));
+        System.out.println("Min: " + findMin(arr));
+
+        Animal dog = new Dog();
+        Animal cat = new Cat();
+        dog.sound();
+        cat.sound();
+
+        Shape circle = new Circle(5);
+        Shape rect = new Rectangle(4, 6);
+        System.out.println("Circle area: " + circle.area());
+        System.out.println("Rectangle area: " + rect.area());
+
+        writeFile("test.txt", "Salom, bu faylga yozilgan matn!");
+        System.out.println("File content:\n" + readFile("test.txt"));
+
+        // guessNumberGame(); // Uncomment to play
     }
 }
